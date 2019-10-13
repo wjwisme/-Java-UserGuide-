@@ -400,7 +400,7 @@ The idiom used to get `fooType` actually defines an anonymous local inner class 
 
 ### <a name="TOC-Serializing-and-Deserializing-Generic-Types"></a>序列化和反序列化泛型
 
-When you call `toJson(obj)`, Gson calls `obj.getClass()` to get information on the fields to serialize. Similarly, you can typically pass `MyClass.class` object in the `fromJson(json, MyClass.class)` method. This works fine if the object is a non-generic type. However, if the object is of a generic type, then the Generic type information is lost because of Java Type Erasure. Here is an example illustrating the point:
+当你调用`toJson(obj)`时, Gson 调用 `obj.getClass()` 去获取属性的序列化信息.  你可以在`fromJson(json, MyClass.class)` 方法中传递`MyClass.class`对象. 如果对象不是一个泛型类型，这将会工作很好的. 然而, 如果该对象是一个泛型, 那么泛型类型会因为Java类型不确定而丢失. 下面通过一个例子来说明这个知识点:
 
 ```java
 class Foo<T> {
@@ -413,9 +413,9 @@ gson.toJson(foo); // May not serialize foo.value correctly
 gson.fromJson(json, foo.getClass()); // Fails to deserialize foo.value as Bar
 ```
 
-The above code fails to interpret value as type Bar because Gson invokes `foo.getClass()` to get its class information, but this method returns a raw class, `Foo.class`. This means that Gson has no way of knowing that this is an object of type `Foo<Bar>`, and not just plain `Foo`.
+上面的代码解释Bar类型失败，因为 Gson 通过调用`foo.getClass()` 去获取类信息, 但是这个方法返回一个原始class字节码（译者注:不包含泛型信息）, `Foo.class`. 这意味着 Gson 没办法知道这是一个 `Foo<Bar>`类型的对象, 没办法知道该类不仅仅是一个普通的 `Foo`.
 
-You can solve this problem by specifying the correct parameterized type for your generic type. You can do this by using the [`TypeToken`](https://static.javadoc.io/com.google.code.gson/gson/2.8.5/com/google/gson/reflect/TypeToken.html) class.
+你可以通过指定正确的参数类型为你的泛型类来解决这个问题. 你能通过 [`TypeToken`](https://static.javadoc.io/com.google.code.gson/gson/2.8.5/com/google/gson/reflect/TypeToken.html) 类来做这件事.
 
 ```java
 Type fooType = new TypeToken<Foo<Bar>>() {}.getType();
@@ -424,7 +424,7 @@ gson.toJson(foo, fooType);
 gson.fromJson(json, fooType);
 ```
 
-The idiom used to get `fooType` actually defines an anonymous local inner class containing a method `getType()` that returns the fully parameterized type.
+被用来获取 `fooType`的语句实际上定义了一个匿名内部类，该匿名内部类包含一个 返回完整参数类型的返回值的方法 `getType()` .
 
 ### <a name="TOC-Serializing-and-Deserializing-Collection-with-Objects-of-Arbitrary-Types"></a>Serializing and Deserializing Collection with Objects of Arbitrary Types
 
@@ -465,7 +465,60 @@ However, deserialization with `fromJson(json, Collection.class)` will not work s
 
 This approach is practical only if the array appears as a top-level element or if you can change the field type holding the collection to be of type `Collection<MyCollectionMemberType>`.
 
+
+
+### <a name="TOC-Serializing-and-Deserializing-Collection-with-Objects-of-Arbitrary-Types"></a>序列化和反序列化包含任意类型对象的集合
+
+有时候，你需要处理包含多种混合类型的JSON数组. 举个例子:
+`['hello',5,{name:'GREETINGS',source:'guest'}]`
+
+这等同于 `Collection` 包含如下所示:
+
+```java
+Collection collection = new ArrayList();
+collection.add("hello");
+collection.add(5);
+collection.add(new Event("GREETINGS", "guest"));
+```
+
+ `Event` 类定义:
+
+```java
+class Event {
+  private String name;
+  private String source;
+  private Event(String name, String source) {
+    this.name = name;
+    this.source = source;
+  }
+}
+```
+
+你可以使用 Gson 不需要做其他额外操作来序列化集合 : 使用`toJson(collection)` 你就能获得期望的输出.
+
+然而, 使用 `fromJson(json, Collection.class)` 反序列化就没有这么便捷了 因为Gson 没有办法知道怎样将JSON串的输入映射成为具体类型. Gson 需要你在`fromJson()`方法中提供一个集合类型的泛化版本. 所以，你有以下三个选择:
+
+1. 使用 Gson's 解析器 API (低级的流处理解析器或者 DOM 解析器 JsonParser) 去解析数组元素 然后使用 `Gson.fromJson()` 遍历处理每个数组元素.这是首选方法. [示例](extras/src/main/java/com/google/gson/extras/examples/rawcollections/RawCollectionsExample.java) 展示如何去做.
+
+2.  为 `Collection.class` 注册一个类型适配器，遍历每个数组成员并且把他们映射成对象. 这种方法的缺陷是它将会破坏Gson中的其他的集合类型.
+
+3. 为 `MyCollectionMemberType` 注册一个类型的适配器并且 将 `Collection<MyCollectionMemberType>`与 `fromJson()` 一起使用.
+
+仅仅当数组元素为顶级（top-level）元素时这个方法才适用或者你可以将保存这个集合属性类型修改为 `Collection<MyCollectionMemberType>`.
+
 ### <a name="TOC-Built-in-Serializers-and-Deserializers"></a>Built-in Serializers and Deserializers
+
+Gson has built-in serializers and deserializers for commonly used classes whose default representation may be inappropriate.
+Here is a list of such classes:
+
+1. `java.net.URL` to match it with strings like `"https://github.com/google/gson/"`
+2. `java.net.URI` to match it with strings like `"/google/gson/"`
+
+You can also find source code for some commonly used classes such as JodaTime at [this page](https://sites.google.com/site/gson/gson-type-adapters-for-common-classes-1).
+
+
+
+### <a name="TOC-Built-in-Serializers-and-Deserializers"></a>内置的序列化器和反序列化器
 
 Gson has built-in serializers and deserializers for commonly used classes whose default representation may be inappropriate.
 Here is a list of such classes:
