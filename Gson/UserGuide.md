@@ -55,6 +55,14 @@ Gson能用来操作任意的Java对象，包括你使用的但没有源代码的
 * Support arbitrarily complex objects
 * Generate compact and readable JSON output
 
+## <a name="TOC-Goals-for-Gson"></a>Gson的目标
+
+* 提供类似Java中`toString()`方法和构造器（工厂方法模型）这样的易用机制将Java和JSON相互转化
+* 允许将已经存在但不能修改的Java对象转化为JSON和从JSON转化回来。
+* 允许对象的自定义表示。
+* 支持任意复杂对象
+* 生成紧凑可读的JSON输出
+
 ## <a name="TOC-Gson-Performance-and-Scalability"></a>Gson Performance and Scalability
 
 Here are some metrics that we obtained on a desktop (dual opteron, 8GB RAM, 64-bit Ubuntu) running lots of other things along-with the tests. You can rerun these tests by using the class [`PerformanceTest`](gson/src/test/java/com/google/gson/metrics/PerformanceTest.java).
@@ -67,9 +75,25 @@ Here are some metrics that we obtained on a desktop (dual opteron, 8GB RAM, 64-b
 
 Note: Delete the `disabled_` prefix to run these tests. We use this prefix to prevent running these tests every time we run JUnit tests.
 
+## <a name="TOC-Gson-Performance-and-Scalability"></a>Gson性能和可伸缩性
+
+下面有我们在桌面系统（双核  AMD *Opteron*(皓龙)处理器, 8GB RAM, 64-bit Ubuntu ）上运行测试获取的一些衡量指标. 你能通过测试类 [`PerformanceTest`](gson/src/test/java/com/google/gson/metrics/PerformanceTest.java)重现测试。
+
+* Strings: 反序列化超过 25MB 的字符串没有任何问题 (see `disabled_testStringDeserializationPerformance` method in `PerformanceTest`)
+* 大集合:
+  * 序列化包含140万的对象的集合 (see `disabled_testLargeCollectionSerialization` method in `PerformanceTest`)
+  * 反序列化包含87000对象的集合 (see `disabled_testLargeCollectionDeserialization` in `PerformanceTest`)
+* Gson 1.4 将字节数组和集合的反序列化限制从80K提高到了超过11MB。
+
+注意: 删除 `disabled_` 前缀后再运行测试. 我们使用这个前缀来阻止每一次运行JUnit测试都跑这些测试。
+
 ## <a name="TOC-Gson-Users"></a>Gson Users
 
 Gson was originally created for use inside Google where it is currently used in a number of projects. It is now used by a number of public projects and companies.
+
+## <a name="TOC-Gson-Users"></a>Gson 使用者
+
+Gson 刚开始是为了Google内部创建，它当前被用在谷歌大量的项目中。现在它也被很多开源项目和机构使用。
 
 ## <a name="TOC-Using-Gson"></a>Using Gson
 
@@ -77,13 +101,32 @@ The primary class to use is [`Gson`](gson/src/main/java/com/google/gson/Gson.jav
 
 The Gson instance does not maintain any state while invoking Json operations. So, you are free to reuse the same object for multiple Json serialization and deserialization operations.
 
+## <a name="TOC-Using-Gson"></a>使用 Gson
+
+要使用Gson，第一个需要的类是 [`Gson`](gson/src/main/java/com/google/gson/Gson.java) ，你能通过 `new Gson()`创建一个Gson实例. 也可以使用 [`GsonBuilder`](gson/src/main/java/com/google/gson/GsonBuilder.java) 类去创建 Gson 实例，使用[`GsonBuilder`](gson/src/main/java/com/google/gson/GsonBuilder.java) 可以同时设置如版本等变量.
+
+当使用Gson实例调用Json操作时不维持任何状态. 所以你可以使用相同的Gson实例对象用作多次序列化和反序列化操作.
+
 ## <a name="TOC-Gson-With-Gradle"></a>Using Gson with Gradle/Android
 ```
 dependencies {
     implementation 'com.google.code.gson:gson:2.8.6'
 }
 ```
+
+
+## <a name="TOC-Gson-With-Gradle"></a>Gradle/Android 使用Gson
+
+```
+dependencies {
+    implementation 'com.google.code.gson:gson:2.8.6'
+}
+```
+
+
+
 ## <a name="TOC-Gson-With-Maven"></a>Using Gson with Maven
+
 To use Gson with Maven2/3, you can use the Gson version available in Maven Central by adding the following dependency:
 
 ```xml
@@ -100,7 +143,29 @@ To use Gson with Maven2/3, you can use the Gson version available in Maven Centr
 
 That is it, now your maven project is Gson enabled. 
 
-### <a name="TOC-Primitives-Examples"></a>Primitives Examples
+
+
+
+
+## <a name="TOC-Gson-With-Maven"></a>Maven 使用Gson
+
+在Maven2/3中使用Gson, 你能通过在pom.xml添加下面依赖使用Maven中央仓库中的可用的Gson版本:
+
+```xml
+<dependencies>
+    <!--  Gson: Java to Json conversion -->
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.8.6</version>
+      <scope>compile</scope>
+    </dependency>
+</dependencies>
+```
+
+好了，现在你的Maven项目可以使用Gson了. 
+
+### <a name="TOC-Primitives-Examples"></a>简单例子
 
 ```java
 // Serialization
@@ -120,7 +185,7 @@ String str = gson.fromJson("\"abc\"", String.class);
 String[] anotherStr = gson.fromJson("[\"abc\"]", String[].class);
 ```
 
-### <a name="TOC-Object-Examples"></a>Object Examples
+### <a name="TOC-Object-Examples"></a>对象使用例子
 
 ```java
 class BagOfPrimitives {
@@ -140,7 +205,7 @@ String json = gson.toJson(obj);
 // ==> json is {"value1":1,"value2":"abc"}
 ```
 
-Note that you can not serialize objects with circular references since that will result in infinite recursion.
+注意，你不能使用循环索引序列化对象，因为这将导致陷入无限循环.
 
 ```java
 // Deserialization
@@ -157,6 +222,19 @@ BagOfPrimitives obj2 = gson.fromJson(json, BagOfPrimitives.class);
   * While serializing, a null field is omitted from the output.
   * While deserializing, a missing entry in JSON results in setting the corresponding field in the object to its default value: null for object types, zero for numeric types, and false for booleans.
 * If a field is _synthetic_, it is ignored and not included in JSON serialization or deserialization.
+* Fields corresponding to the outer classes in inner classes, anonymous classes, and local classes are ignored and not included in serialization or deserialization.
+
+
+
+#### <a name="TOC-Finer-Points-with-Objects"></a>**对象使用细则**
+
+* 推荐使用私有属性（private field）.
+* 不必使用任何注释表示该属性将会被序列化或反序列化。当前类的所有属性（和从父类继承的属性）默认会被序列化和反序列化.
+* 如果属性被 transient 修饰, 默认不被序列化和反序列化.
+* 以下能正确处理null.
+  * 当序列化的时候, null属性被从输出里忽略.
+  * 当反序列化的时候, JSON串中缺少的属性会被反序列化为默认值: 对象类型为null, 数字类型为0, boolean类型为false.
+* 如果属性被修饰为 _synthetic_（编译器添加的）, 该属性将会被忽视，不会被序列化和反序列化.
 * Fields corresponding to the outer classes in inner classes, anonymous classes, and local classes are ignored and not included in serialization or deserialization.
 
 ### <a name="TOC-Nested-Classes-including-Inner-Classes-"></a>Nested Classes (including Inner Classes)
@@ -198,7 +276,52 @@ public class InstanceCreatorForB implements InstanceCreator<A.B> {
 
 The above is possible, but not recommended.
 
-### <a name="TOC-Array-Examples"></a>Array Examples
+
+
+
+
+
+
+### <a name="TOC-Nested-Classes-including-Inner-Classes-"></a>嵌套类 (包括内部类)
+
+Gson 可以很轻松的序列化静态嵌套类.
+
+Gson 也能反序列化静态嵌套类. 然而, Gson 不能自动反序列化 the **pure inner classes since their no-args constructor also need a reference to the containing Object** which is not available at the time of deserialization. You can address this problem by either making the inner class static or by providing a custom InstanceCreator for it. 下面有一个例子:
+
+```java
+public class A { 
+  public String a; 
+
+  class B { 
+
+    public String b; 
+
+    public B() {
+      // No args constructor for B
+    }
+  } 
+}
+```
+
+**注意**: 上面的B类默认不能被Gson反序列化.
+
+Gson 不能反序列化 `{"b":"abc"}` 成为一个 B 实例，因为B类是一个内部类. 如果 B 被定义为静态类，那么Gson将会可以反序列化这段JSON串. 另一种解决办法是为B类专门写一个creator. 
+
+```java
+public class InstanceCreatorForB implements InstanceCreator<A.B> {
+  private final A a;
+  public InstanceCreatorForB(A a)  {
+    this.a = a;
+  }
+  public A.B createInstance(Type type) {
+    return a.new B();
+  }
+}
+```
+
+上面可以用，但不推荐使用.
+
+### <a name="TOC-Array-Examples"></a>数组示例
 
 ```java
 Gson gson = new Gson();
@@ -214,9 +337,9 @@ int[] ints2 = gson.fromJson("[1,2,3,4,5]", int[].class);
 // ==> ints2 will be same as ints
 ```
 
-We also support multi-dimensional arrays, with arbitrarily complex element types.
+我们也支持任意复杂类型的多维数组.
 
-### <a name="TOC-Collections-Examples"></a>Collections Examples
+### <a name="TOC-Collections-Examples"></a>集合示例
 
 ```java
 Gson gson = new Gson();
@@ -231,13 +354,18 @@ Collection<Integer> ints2 = gson.fromJson(json, collectionType);
 // ==> ints2 is same as ints
 ```
 
-Fairly hideous: note how we define the type of collection.
-Unfortunately, there is no way to get around this in Java.
+很可怕啊: 请记住我们怎样在反序列化的时候定义集合类型.
+不幸的是，在Java中，上面的问题暂时还没有解决办法.
 
 #### <a name="TOC-Collections-Limitations"></a>Collections Limitations
 
 Gson can serialize collection of arbitrary objects but can not deserialize from it, because there is no way for the user to indicate the type of the resulting object. Instead, while deserializing, the Collection must be of a specific, generic type.
 This makes sense, and is rarely a problem when following good Java coding practices.
+
+#### <a name="TOC-Collections-Limitations"></a>集合限制
+
+Gson 能序列化任意类型的集合但是不能从它反序列化, 因为没有办法让使用者去标识结果对象类型. 因此，在反序列化的时候，集合必须是一个指定的泛型.
+这很有意义, 并且当我们遵守良好的Java编码规范时很少出问题.
 
 ### <a name="TOC-Serializing-and-Deserializing-Generic-Types"></a>Serializing and Deserializing Generic Types
 
@@ -264,6 +392,38 @@ gson.toJson(foo, fooType);
 
 gson.fromJson(json, fooType);
 ```
+The idiom used to get `fooType` actually defines an anonymous local inner class containing a method `getType()` that returns the fully parameterized type.
+
+
+
+
+
+### <a name="TOC-Serializing-and-Deserializing-Generic-Types"></a>序列化和反序列化泛型
+
+When you call `toJson(obj)`, Gson calls `obj.getClass()` to get information on the fields to serialize. Similarly, you can typically pass `MyClass.class` object in the `fromJson(json, MyClass.class)` method. This works fine if the object is a non-generic type. However, if the object is of a generic type, then the Generic type information is lost because of Java Type Erasure. Here is an example illustrating the point:
+
+```java
+class Foo<T> {
+  T value;
+}
+Gson gson = new Gson();
+Foo<Bar> foo = new Foo<Bar>();
+gson.toJson(foo); // May not serialize foo.value correctly
+
+gson.fromJson(json, foo.getClass()); // Fails to deserialize foo.value as Bar
+```
+
+The above code fails to interpret value as type Bar because Gson invokes `foo.getClass()` to get its class information, but this method returns a raw class, `Foo.class`. This means that Gson has no way of knowing that this is an object of type `Foo<Bar>`, and not just plain `Foo`.
+
+You can solve this problem by specifying the correct parameterized type for your generic type. You can do this by using the [`TypeToken`](https://static.javadoc.io/com.google.code.gson/gson/2.8.5/com/google/gson/reflect/TypeToken.html) class.
+
+```java
+Type fooType = new TypeToken<Foo<Bar>>() {}.getType();
+gson.toJson(foo, fooType);
+
+gson.fromJson(json, fooType);
+```
+
 The idiom used to get `fooType` actually defines an anonymous local inner class containing a method `getType()` that returns the fully parameterized type.
 
 ### <a name="TOC-Serializing-and-Deserializing-Collection-with-Objects-of-Arbitrary-Types"></a>Serializing and Deserializing Collection with Objects of Arbitrary Types
