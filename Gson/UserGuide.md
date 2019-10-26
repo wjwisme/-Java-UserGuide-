@@ -520,13 +520,13 @@ You can also find source code for some commonly used classes such as JodaTime at
 
 ### <a name="TOC-Built-in-Serializers-and-Deserializers"></a>内置的序列化器和反序列化器
 
-Gson has built-in serializers and deserializers for commonly used classes whose default representation may be inappropriate.
-Here is a list of such classes:
+Gson 内置了序列化器和反序列化器，一般用于处理不适合使用默认表示的类。 
+下面是这样一些类:
 
-1. `java.net.URL` to match it with strings like `"https://github.com/google/gson/"`
-2. `java.net.URI` to match it with strings like `"/google/gson/"`
+1. `java.net.URL` 匹配这样的字符串： `"https://github.com/google/gson/"`
+2. `java.net.URI` 匹配这样的字符串： `"/google/gson/"`
 
-You can also find source code for some commonly used classes such as JodaTime at [this page](https://sites.google.com/site/gson/gson-type-adapters-for-common-classes-1).
+你也能在 [this page](https://sites.google.com/site/gson/gson-type-adapters-for-common-classes-1).找到像JodaTime 一些常用类的源代码。
 
 ### <a name="TOC-Custom-Serialization-and-Deserialization"></a>Custom Serialization and Deserialization
 
@@ -537,6 +537,28 @@ Gson allows you to register your own custom serializers and deserializers. This 
 * Json Deserializers: Needed to define custom deserialization for a type
 
 * Instance Creators: Not needed if no-args constructor is available or a deserializer is registered
+
+```java
+GsonBuilder gson = new GsonBuilder();
+gson.registerTypeAdapter(MyType2.class, new MyTypeAdapter());
+gson.registerTypeAdapter(MyType.class, new MySerializer());
+gson.registerTypeAdapter(MyType.class, new MyDeserializer());
+gson.registerTypeAdapter(MyType.class, new MyInstanceCreator());
+```
+
+`registerTypeAdapter` call checks if the type adapter implements more than one of these interfaces and register it for all of them.
+
+
+
+### <a name="TOC-Custom-Serialization-and-Deserialization"></a>自定义序列化和反序列化
+
+有时，默认实现不能像你想的那样工作. 最常见的例子是处理像DateTime这样的类.
+Gson 允许你注册你自己自定义的序列化器和反序列化器. 我们可以用过定义两个部分来完成:
+
+* Json 序列化器: 需要为对象定义自定义序列化
+* Json 反序列化器: 需要为一个类型定义自定义的反序列化
+
+* 实例化Creators: 如果无参构造器可用或者反序列化器被注册则不需要实例化Creators
 
 ```java
 GsonBuilder gson = new GsonBuilder();
